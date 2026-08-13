@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import './HighScoreList.css';
 import { useEffect, useState } from 'preact/hooks';
 import type { Score } from '../types';
 import { getTop } from '../services/HighScoreService';
@@ -13,7 +14,12 @@ export function HighScoreList({ scores: propScores }: Props) {
 
   useEffect(() => {
     if (!propScores) {
-      setScores(getTop());
+      const result = getTop();
+      if (result instanceof Promise) {
+        result.then(setScores);
+      } else {
+        setScores(result);
+      }
     }
   }, [propScores]);
 
