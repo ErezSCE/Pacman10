@@ -2,18 +2,27 @@ import { Howl, Howler } from 'howler';
 
 /**
  * Mapping of sound identifiers to audio file URLs.
- * In a real project these would point to actual assets in the public folder.
- * For the purpose of this exercise we use placeholder strings.
+ * In a real project these would point to actual bundled assets.
+ * Here we import the mp3 files so that bundlers include them and the paths resolve at runtime.
  */
+import dotSound from "../assets/sounds/dot.mp3";
+import pelletSound from "../assets/sounds/pellet.mp3";
+import ghostEatSound from "../assets/sounds/ghost_eat.mp3";
+import deathSound from "../assets/sounds/death.mp3";
+import fruitSound from "../assets/sounds/fruit.mp3";
+import extraLifeSound from "../assets/sounds/extra_life.mp3";
+import startupSound from "../assets/sounds/startup.mp3";
+import sirenSound from "../assets/sounds/siren.mp3";
+
 const soundSources: Record<string, string> = {
-  dot: '/sounds/dot.mp3',
-  pellet: '/sounds/pellet.mp3',
-  ghostEat: '/sounds/ghost_eat.mp3',
-  death: '/sounds/death.mp3',
-  fruit: '/sounds/fruit.mp3',
-  extraLife: '/sounds/extra_life.mp3',
-  startup: '/sounds/startup.mp3',
-  siren: '/sounds/siren.mp3',
+  dot: dotSound,
+  pellet: pelletSound,
+  ghostEat: ghostEatSound,
+  death: deathSound,
+  fruit: fruitSound,
+  extraLife: extraLifeSound,
+  startup: startupSound,
+  siren: sirenSound,
 };
 
 /**
@@ -32,7 +41,7 @@ export interface PlaySoundOptions {
  */
 export class AudioManager {
   private static instance: AudioManager;
-  /** Cache of Howl objects keyed by sound id. */
+  /** Cache of Howl objects keyed by `${soundId}|${loop}` tuple. */
   private howlCache: Map<string, Howl> = new Map();
 
   private constructor() {}
@@ -45,10 +54,11 @@ export class AudioManager {
   }
 
   /**
-   * Retrieves a Howl instance for the given sound id, creating it if necessary.
+   * Retrieves a Howl instance for the given sound id and loop flag, creating it if necessary.
    */
   private getHowl(soundId: string, loop: boolean = false): Howl {
-    const cached = this.howlCache.get(soundId);
+    const cacheKey = `${soundId}|${loop}`;
+    const cached = this.howlCache.get(cacheKey);
     if (cached) {
       return cached;
     }
@@ -57,7 +67,7 @@ export class AudioManager {
       throw new Error(`Unknown sound id: ${soundId}`);
     }
     const howl = new Howl({ src, loop });
-    this.howlCache.set(soundId, howl);
+    this.howlCache.set(cacheKey, howl);
     return howl;
   }
 
@@ -67,7 +77,7 @@ export class AudioManager {
   public play(soundId: string, options: PlaySoundOptions = {}): void {
     const { pitch, loop } = options;
     const howl = this.getHowl(soundId, !!loop);
-    if (typeof pitch === 'number') {
+    if (typeof pitch === "number") {
       howl.rate(pitch);
     }
     howl.play();
