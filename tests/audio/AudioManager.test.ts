@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AudioManager, playSound } from '../../src/audio/AudioManager';
+import { Howl } from 'howler';
 
 // Mock Howler module
 vi.mock('howler', () => {
@@ -15,16 +16,35 @@ vi.mock('howler', () => {
       mockHowlInstances.push(this);
     }
   }
+  // expose instances for tests
+  (MockHowl as any).instances = mockHowlInstances;
   const Howl = MockHowl as unknown as typeof import('howler').Howl;
   const Howler = { mute: vi.fn() } as unknown as typeof import('howler').Howler;
   return { Howl, Howler, __esModule: true };
 });
 
+  it('[US-007#3] playSound forwards options to AudioManager correctly', () => {
+    // Use the convenience function with pitch and loop
+    playSound('dot', { pitch: 1.5, loop: true });
+    // A temporary Howl should have been created (since pitch is specified)
+    const instances = (Howl as any).instances as any[];
+    expect(instances.length).toBe(1);
+    const tempHowl = instances[0];
+    expect(tempHowl.loop).toBe(true);
+    // rate should have been called with the pitch value
+    expect(tempHowl.rate).toHaveBeenCalledWith(1.5);
+    // play should have been called
+    expect(tempHowl.play).toHaveBeenCalled();
+  });
+
+
 describe('AudioManager', () => {
   beforeEach(() => {
-    // Reset singleton instance and caches between tests
-    // @ts-ignore accessing private static for test purposes
-    (AudioManager as any).instance = undefined;
+    // Reset mocks and singleton between tests
+    vi.resetAllMocks();
+    AudioManager.reset();
+    // Clear recorded Howl instances
+    (Howl as any).instances = [];
   });
 
   it('[US-007#1] creates separate Howl instances for different loop settings', () => {
