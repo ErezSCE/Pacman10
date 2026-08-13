@@ -1,0 +1,24 @@
+{
+  "name": "pacman10",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "preact": "^10.15.1",
+    "zustand": "^4.5.0",
+    "howler": "^2.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2",
+    "vite": "^5.2.0",
+    "vitest": "^1.2.2",
+    "@types/node": "^20.11.30",
+    "@types/vitest": "^1.0.0",
+    "@preact/preset-vite": "^2.7.0"
+  }
+}
