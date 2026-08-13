@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AudioManager, playSound } from '../../src/audio/AudioManager';
-import { Howl } from 'howler';
+import { AudioManager, playSound, setMute } from '../../src/audio/AudioManager';
+import { Howl, Howler } from 'howler';
 
 // Mock Howler module
 vi.mock('howler', () => {
@@ -23,20 +23,19 @@ vi.mock('howler', () => {
   return { Howl, Howler, __esModule: true };
 });
 
-  it('[US-007#3] playSound forwards options to AudioManager correctly', () => {
-    // Use the convenience function with pitch and loop
-    playSound('dot', { pitch: 1.5, loop: true });
-    // A temporary Howl should have been created (since pitch is specified)
-    const instances = (Howl as any).instances as any[];
-    expect(instances.length).toBe(1);
-    const tempHowl = instances[0];
-    expect(tempHowl.loop).toBe(true);
-    // rate should have been called with the pitch value
-    expect(tempHowl.rate).toHaveBeenCalledWith(1.5);
-    // play should have been called
-    expect(tempHowl.play).toHaveBeenCalled();
-  });
-
+it('[US-007#3] playSound forwards options to AudioManager correctly', () => {
+  // Use the convenience function with pitch and loop
+  playSound('dot', { pitch: 1.5, loop: true });
+  // A temporary Howl should have been created (since pitch is specified)
+  const instances = (Howl as any).instances as any[];
+  expect(instances.length).toBe(1);
+  const tempHowl = instances[0];
+  expect(tempHowl.loop).toBe(true);
+  // rate should have been called with the pitch value
+  expect(tempHowl.rate).toHaveBeenCalledWith(1.5);
+  // play should have been called
+  expect(tempHowl.play).toHaveBeenCalled();
+});
 
 describe('AudioManager', () => {
   beforeEach(() => {
@@ -78,5 +77,12 @@ describe('AudioManager', () => {
     expect(cacheSize).toBe(1);
     const secondInstance = (manager as any).howlCache.values().next().value;
     expect(secondInstance).toBe(firstInstance);
+  });
+
+  it('[US-007#4] mute functionality proxies to Howler', () => {
+    setMute(true);
+    expect(Howler.mute).toHaveBeenCalledWith(true);
+    setMute(false);
+    expect(Howler.mute).toHaveBeenCalledWith(false);
   });
 });

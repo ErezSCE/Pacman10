@@ -1,29 +1,29 @@
 import { Howl, Howler } from 'howler';
 
 /**
- * Mapping of sound identifiers to audio file URLs.
- * In a real project these would point to actual bundled assets.
- * Here we import the mp3 files so that bundlers include them and the paths resolve at runtime.
+ * Import audio assets so that bundler includes them. In this simplified repo we provide empty placeholder files.
  */
-// Sound asset paths. In this simplified repo we use placeholder strings.
-const dotSound = "dot.mp3";
-const pelletSound = "pellet.mp3";
-const ghostEatSound = "ghost_eat.mp3";
-const deathSound = "death.mp3";
-const fruitSound = "fruit.mp3";
-const extraLifeSound = "extra_life.mp3";
-const startupSound = "startup.mp3";
-const sirenSound = "siren.mp3";
+import dotSoundUrl from '../assets/dot.mp3';
+import pelletSoundUrl from '../assets/pellet.mp3';
+import ghostEatSoundUrl from '../assets/ghost_eat.mp3';
+import deathSoundUrl from '../assets/death.mp3';
+import fruitSoundUrl from '../assets/fruit.mp3';
+import extraLifeSoundUrl from '../assets/extra_life.mp3';
+import startupSoundUrl from '../assets/startup.mp3';
+import sirenSoundUrl from '../assets/siren.mp3';
 
+/**
+ * Mapping of sound identifiers to audio file URLs.
+ */
 const soundSources: Record<string, string> = {
-  dot: dotSound,
-  pellet: pelletSound,
-  ghostEat: ghostEatSound,
-  death: deathSound,
-  fruit: fruitSound,
-  extraLife: extraLifeSound,
-  startup: startupSound,
-  siren: sirenSound,
+  dot: dotSoundUrl,
+  pellet: pelletSoundUrl,
+  ghostEat: ghostEatSoundUrl,
+  death: deathSoundUrl,
+  fruit: fruitSoundUrl,
+  extraLife: extraLifeSoundUrl,
+  startup: startupSoundUrl,
+  siren: sirenSoundUrl,
 };
 
 /**
@@ -42,7 +42,7 @@ export interface PlaySoundOptions {
  */
 export class AudioManager {
   private static instance: AudioManager;
-  /** Cache of Howl objects keyed by `${soundId}|${loop}` tuple. */
+  /** Cache of Howl objects keyed by `${soundId}|${loop}|${pitch}` tuple. */
   private howlCache: Map<string, Howl> = new Map();
 
   private constructor() {}
@@ -58,14 +58,18 @@ export class AudioManager {
    * Reset the singleton instance and its cache. Intended for testing only.
    */
   public static reset(): void {
+    if (AudioManager.instance) {
+      // clear internal cache to avoid memory leaks between tests
+      AudioManager.instance.howlCache.clear();
+    }
     AudioManager.instance = undefined;
   }
 
   /**
-   * Retrieves a Howl instance for the given sound id and loop flag, creating it if necessary.
+   * Retrieves a Howl instance for the given parameters, creating it if necessary.
    */
-  private getHowl(soundId: string, loop: boolean = false): Howl {
-    const cacheKey = `${soundId}|${loop}`;
+  private getHowl(soundId: string, loop: boolean = false, pitch?: number): Howl {
+    const cacheKey = `${soundId}|${loop}|${pitch ?? ''}`;
     const cached = this.howlCache.get(cacheKey);
     if (cached) {
       return cached;
@@ -75,6 +79,9 @@ export class AudioManager {
       throw new Error(`Unknown sound id: ${soundId}`);
     }
     const howl = new Howl({ src, loop });
+    if (typeof pitch === 'number') {
+      howl.rate(pitch);
+    }
     this.howlCache.set(cacheKey, howl);
     return howl;
   }
@@ -84,19 +91,7 @@ export class AudioManager {
    */
   public play(soundId: string, options: PlaySoundOptions = {}): void {
     const { pitch, loop } = options;
-    // If a pitch is specified, create a temporary Howl to avoid mutating cached instance.
-    if (typeof pitch === "number") {
-      const src = soundSources[soundId];
-      if (!src) {
-        throw new Error(`Unknown sound id: ${soundId}`);
-      }
-      const tempHowl = new Howl({ src, loop: !!loop });
-      tempHowl.rate(pitch);
-      tempHowl.play();
-      return;
-    }
-    // No pitch: reuse cached Howl (loop flag considered in cache key).
-    const howl = this.getHowl(soundId, !!loop);
+    const howl = this.getHowl(soundId, !!loop, pitch);
     howl.play();
   }
 
@@ -105,6 +100,21 @@ export class AudioManager {
    */
   public mute(mute: boolean): void {
     Howler.mute(mute);
+  }
+
+  /**
+   * Adjust the siren pitch based on the current level.
+   * The pitch increases linearly with level, capped at 2.0.
+   */
+  public setSirenPitch(level: number): void {
+    const basePitch = 1.0;
+    const increment = 0.05; // increase per level
+    const maxPitch = 2.0;
+    const pitch = Math.min(basePitch + level * increment, maxPitch);
+    // Siren is typically looping; ensure we reuse the same Howl instance.
+    const howl = this.getHowl('siren', true, pitch);
+    // If the Howl was already playing, update its rate.
+    howl.rate(pitch);
   }
 }
 
