@@ -75,4 +75,39 @@ describe('GameEngine', () => {
     const internalState = engine.getState();
     expect(internalState.currentFruit?.type).not.toBe('Mutated');
   });
+
+  it('[US-004#4] fruit spawns at correct thresholds with correct type and points', () => {
+    const engine = new GameEngine(0);
+    // No fruit initially
+    expect(engine.getState().currentFruit).toBeNull();
+    // Eat 70 dots to reach first threshold
+    for (let i = 0; i < 70; i++) engine.eatDot();
+    let state = engine.getState();
+    expect(state.currentFruit).not.toBeNull();
+    expect(state.currentFruit?.type).toBe('Cherry');
+    expect(state.currentFruit?.points).toBe(100);
+    // Collect the fruit to advance
+    const points = engine.collectFruit();
+    expect(points).toBe(100);
+    // After collection, no fruit should be present
+    expect(engine.getState().currentFruit).toBeNull();
+    // Eat more dots to reach second threshold (total 170)
+    for (let i = 0; i < 100; i++) engine.eatDot(); // now total 170 dots eaten
+    state = engine.getState();
+    expect(state.currentFruit).not.toBeNull();
+    expect(state.currentFruit?.type).toBe('Strawberry');
+    expect(state.currentFruit?.points).toBe(300);
+  });
+
+  it('[US-004#5] collecting a fruit increments score by fruit points', () => {
+    const engine = new GameEngine(0);
+    // Spawn first fruit
+    for (let i = 0; i < 70; i++) engine.eatDot();
+    const beforeScore = engine.getState().score;
+    const fruitPoints = engine.getState().currentFruit?.points ?? 0;
+    const collected = engine.collectFruit();
+    expect(collected).toBe(fruitPoints);
+    const afterScore = engine.getState().score;
+    expect(afterScore).toBe(beforeScore + fruitPoints);
+  });
 });

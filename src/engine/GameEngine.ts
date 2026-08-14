@@ -47,6 +47,7 @@ export class GameEngine {
       score: 0,
       currentFruit: null,
       fruitElapsedMs: 0,
+      fruitTimedOut: false,
     };
   }
 
@@ -72,7 +73,7 @@ export class GameEngine {
       this.state.fruitElapsedMs += deltaMs;
       if (this.state.fruitElapsedMs >= this.config.fruitTimeoutMs) {
         // Fruit timed out
-        this.clearFruit();
+        this.clearFruit(true);
       }
     }
   }
@@ -87,11 +88,15 @@ export class GameEngine {
   }
 
   /** Private helper to clear any active fruit */
-  private clearFruit(): void {
+  private clearFruit(isTimeout: boolean = false): void {
+    // If the fruit timed out, set flag; otherwise ensure flag is false.
+    this.state.fruitTimedOut = isTimeout;
     this.state.currentFruit = null;
     this.state.fruitElapsedMs = 0;
-    // Advance to next fruit index so subsequent thresholds are checked correctly
-    this.nextFruitIndex += 1;
+    // Advance to next fruit index only on successful collection (not timeout)
+    if (!isTimeout) {
+      this.nextFruitIndex += 1;
+    }
   }
 
   /** Determine whether a fruit should spawn based on dots eaten */
