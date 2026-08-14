@@ -3,10 +3,10 @@
 
 import { levelConfigs, LevelConfig } from "../config/LevelConfig";
 
-export type Fruit = {
-  type: string;
-  points: number;
-};
+import { Fruit } from "../types";
+
+// Removed duplicate Fruit type definition
+
 
 export type GameState = {
   /** Indicates if the current fruit timed out */
@@ -89,14 +89,12 @@ export class GameEngine {
 
   /** Private helper to clear any active fruit */
   private clearFruit(isTimeout: boolean = false): void {
-    // If the fruit timed out, set flag; otherwise ensure flag is false.
+    // Set flag indicating whether the fruit timed out.
     this.state.fruitTimedOut = isTimeout;
     this.state.currentFruit = null;
     this.state.fruitElapsedMs = 0;
-    // Advance to next fruit index only on successful collection (not timeout)
-    if (!isTimeout) {
-      this.nextFruitIndex += 1;
-    }
+    // Advance to next fruit index regardless of timeout to avoid repeated attempts.
+    this.nextFruitIndex += 1;
   }
 
   /** Determine whether a fruit should spawn based on dots eaten */
