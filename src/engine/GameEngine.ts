@@ -9,6 +9,9 @@ export type Fruit = {
 };
 
 export type GameState = {
+  /** Indicates if the current fruit timed out */
+  fruitTimedOut: boolean;
+
   /** Total number of dots eaten in the current level */
   dotsEaten: number;
   /** Current score */
