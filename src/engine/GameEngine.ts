@@ -114,6 +114,8 @@ export class GameEngine {
         return;
       }
       this.state.currentFruit = { type: fruitDef.type, points: fruitDef.points };
+      // Reset timeout flag when a new fruit appears
+      this.state.fruitTimedOut = false;
       this.state.fruitElapsedMs = 0;
     }
   }
