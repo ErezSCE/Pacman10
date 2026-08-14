@@ -30,7 +30,15 @@ export class GameEngine {
   private nextFruitIndex: number = 0;
 
   constructor(levelIndex: number = 0) {
-    this.config = levelConfigs[levelIndex];
+    // Validate levelIndex against available configurations.
+    // If out of bounds, fallback to the first level configuration to avoid undefined errors.
+    if (levelIndex < 0 || levelIndex >= levelConfigs.length) {
+      // In a production setting we might throw an error, but for resilience we fallback.
+      console.warn(`GameEngine: levelIndex ${levelIndex} out of range, defaulting to 0`);
+      this.config = levelConfigs[0];
+    } else {
+      this.config = levelConfigs[levelIndex];
+    }
     this.state = {
       dotsEaten: 0,
       score: 0,
@@ -39,9 +47,14 @@ export class GameEngine {
     };
   }
 
-  /** Returns a shallow copy of the internal state */
+  /** Returns a deep copy of the internal state to preserve encapsulation */
   getState(): GameState {
-    return { ...this.state };
+    // Deep copy currentFruit if present to prevent external mutation.
+    const fruitCopy = this.state.currentFruit ? { ...this.state.currentFruit } : null;
+    return {
+      ...this.state,
+      currentFruit: fruitCopy,
+    };
   }
 
   /** Simulate eating a dot. Handles fruit spawn checks. */
@@ -87,6 +100,13 @@ export class GameEngine {
     const threshold = this.config.fruitSpawnThresholds[this.nextFruitIndex];
     if (this.state.dotsEaten >= threshold) {
       const fruitDef = this.config.fruits[this.nextFruitIndex];
+      // Guard against missing fruit definition to avoid runtime errors.
+      if (!fruitDef) {
+        console.warn(
+          `GameEngine: Missing fruit definition for index ${this.nextFruitIndex} at threshold ${threshold}`
+        );
+        return;
+      }
       this.state.currentFruit = { type: fruitDef.type, points: fruitDef.points };
       this.state.fruitElapsedMs = 0;
     }
